@@ -1,0 +1,15 @@
+
+#root {
+    --background: #0c0c0c;
+    --foreground: #102626;
+}
+
+*,
+html {
+    font-family: 'nunito sans';
+} 
+
+body {
+    background-color: var(--background);
+    color: var(--foreground);
+}
