@@ -3,5 +3,20 @@
 @use './styles/base';
 @use './styles/utils/reset';
 @use './styles/utils/mixins';
+@use './styles/utils/variables';
+
+//pages 
+@use './styles/pages/home';
+@use './styles/pages/lobby';
+//admin
+@use './styles/pages/admin/adminLoggin';
+@use './styles/pages/admin/adminPage';
+
+//components
+@use './styles/components/player/playerList';
+@use './styles/components/player/playerInfos';
+@use './styles/components/player/themeSelection';
+//admin
+@use './styles/components/admin/themesForm';
 
 @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');

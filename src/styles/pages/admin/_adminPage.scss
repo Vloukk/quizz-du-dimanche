@@ -1,0 +1,36 @@
+.adminPage {
+    padding: 40px;
+    box-sizing: border-box;
+    &__themes {
+        display: flex;
+        gap: 50px;
+        .themes {
+            &__list {
+                background-color: var(--background2);
+                display: flex;
+                flex-direction: column;
+                width: 25vw;
+                padding: 20px;
+                box-sizing: border-box;
+                border-radius: 10px;
+                h2 {
+                    padding-bottom: 10px;
+                }
+                li {
+                    .themeCard {
+                        border-radius: 10px;
+                        &__name {
+                            display: flex;
+                            gap: 10px;
+                        }
+                        &__buttons {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 10px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

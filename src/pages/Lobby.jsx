@@ -1,137 +1,151 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import PlayerLobby from "../components/PlayerLobby";
-import { io } from "socket.io-client";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { db } from '../firebase'; // Assure-toi que tu as bien l'instance de Firestore
+import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
+
+// Composants
+import PlayerInfo from '../components/player/PlayerInfo';
+import PlayerList from '../components/player/PlayerList';
+import ThemeSelection from '../components/player/ThemeSelection';
 
 const Lobby = () => {
-  const { gameId } = useParams();
-  const [players, setPlayers] = useState([]);
-  const [pseudo, setPseudo] = useState(""); // Pseudo du joueur
+  const navigate = useNavigate();
+  const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId')); 
+  const [pseudo, setPseudo] = useState(localStorage.getItem('pseudo'));
+  const [playerId, setPlayerId] = useState(localStorage.getItem('playerId')); 
+  const [players, setPlayers] = useState([]); 
+  const [isModalOpen, setIsModalOpen] = useState(true); // Ouvrir la modal au début
+  const [themes, setThemes] = useState([]);
+  const [playerTheme, setPlayerTheme] = useState(null); // Nouveau state pour stocker le thème du joueur
+
+  // Fonction pour fermer la modal après sélection du thème
+  const closeThemeSelection = () => {
+    setIsModalOpen(false); // Fermer la modal après la sélection du thème
+  };
 
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_SOCKET_URL);
-  
-    // Récupérer le pseudo à partir du sessionStorage
-    const storedPseudo = sessionStorage.getItem("pseudo");
-    if (storedPseudo) {
-      setPseudo(storedPseudo); // Mettre à jour l'état avec le pseudo stocké
+    console.log('Player ID dans Lobby:', playerId);
+    if (!sessionId) {
+      navigate('/'); // Si le sessionId est absent, rediriger vers la page d'accueil
     }
-  
-    // Fonction pour récupérer les joueurs
-    const fetchPlayers = async () => {
+  }, [sessionId, navigate]);
+
+  // Charger le thème du joueur depuis Firestore
+  useEffect(() => {
+    const fetchPlayerTheme = async () => {
       try {
-        const response = await fetch(`/api/players/get-players?gameId=${gameId}`);
-        const contentType = response.headers.get("Content-Type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("La réponse n'est pas au format JSON");
-        }
-  
-        const data = await response.json();
-        console.log("Players fetched:", data); // Log pour vérifier la réponse
-        if (Array.isArray(data)) {
-          setPlayers(data); // Mettre à jour l'état avec les joueurs
-        } else {
-          setPlayers([]); // Si ce n'est pas un tableau, on met players à un tableau vide
+        if (playerId) {
+          const playerQuery = query(collection(db, 'players'), where('playerId', '==', playerId));
+          const querySnapshot = await getDocs(playerQuery);
+
+          if (!querySnapshot.empty) {
+            const playerDoc = querySnapshot.docs[0]; // Le joueur correspondant
+            const themeId = playerDoc.data().themeId; // Récupérer l'ID du thème
+
+            // Ensuite, récupérer les détails du thème à partir de l'ID du thème
+            const themeQuery = query(collection(db, 'themes'), where('id', '==', themeId));
+            const themeSnapshot = await getDocs(themeQuery);
+
+            if (!themeSnapshot.empty) {
+              const themeDoc = themeSnapshot.docs[0];
+              setPlayerTheme({
+                name: themeDoc.data().name, // Nom du thème
+                color: themeDoc.data().color, // Couleur du thème
+              });
+            }
+          }
         }
       } catch (error) {
-        console.error("Erreur lors de la récupération des joueurs", error);
+        console.error('Erreur lors de la récupération du thème du joueur:', error);
       }
     };
-  
-    fetchPlayers();
-  
-    // Fonction de nettoyage pour supprimer le pseudo à la fermeture de la page
-    // Lors de la fermeture de la page
-const handleBeforeUnload = (event) => {
-  const storedPseudo = sessionStorage.getItem("pseudo");
-  if (storedPseudo) {
-    console.log(`Le joueur ${storedPseudo} quitte la page...`);
 
-    // Envoi de l'événement via Socket.io
-    socket.emit("playerLeft", { pseudo: storedPseudo, gameId });
+    fetchPlayerTheme();
+  }, [playerId]); // Recharger le thème chaque fois que le playerId change
 
-    // Utilisation de fetch pour supprimer le joueur (au lieu de sendBeacon)
-    const data = JSON.stringify({ pseudo: storedPseudo });
-    fetch("/api/players/remove-player", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          console.log(`Joueur ${storedPseudo} supprimé avec succès.`);
-        } else {
-          console.error("Erreur lors de la suppression du joueur:", data.error);
-        }
-      })
-      .catch((error) => {
-        console.error("Erreur lors de la requête de suppression:", error);
-      });
-
-    // Nécessaire pour certains navigateurs
-    event.preventDefault();
-    event.returnValue = "";
-  }
-};
-    window.addEventListener("beforeunload", handleBeforeUnload);
-      
-        // Nettoyage de l'événement et de la connexion Socket.io
-        return () => {
-          window.removeEventListener("beforeunload", handleBeforeUnload);
-          socket.disconnect(); // Fermer la connexion WebSocket à la fermeture du composant
-        };
-  }, [gameId]);
-  
-
-  const handleReadyToggle = async (player) => {
-    console.log("Ready toggle for player:", player); // Vérifier si handleReadyToggle est appelé
-
+  // Fonction pour la déconnexion
+  const handleLogout = async () => {
     try {
-      const response = await fetch("/api/players/ready", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          playerId: player._id, // Utiliser l'ID du joueur
-          isReady: !player.isReady, // Inverser l'état de "prêt"
-        }),
-      });
+      const playerId = localStorage.getItem('playerId');
 
-      const data = await response.json();
-      if (data.success) {
-        // Mettre à jour l'état local des joueurs
-        setPlayers((prevPlayers) =>
-          prevPlayers.map((p) =>
-            p._id === player._id
-              ? { ...p, isReady: !p.isReady } // Inverser l'état "isReady"
-              : p
-          )
-        );
-      } else {
-        console.error("Impossible de mettre à jour le statut de prêt");
+      if (playerId) {
+        // Trouver et supprimer le joueur de Firestore
+        const playerQuery = query(collection(db, 'players'), where('playerId', '==', playerId));
+        const querySnapshot = await getDocs(playerQuery);
+
+        if (!querySnapshot.empty) {
+          const docRef = querySnapshot.docs[0].ref; // Accéder à la référence du document
+          await deleteDoc(docRef); // Supprimer le joueur de Firestore
+          console.log('Joueur supprimé avec succès');
+        }
       }
+
+      // Supprimer du localStorage et rediriger
+      localStorage.removeItem('sessionId');
+      localStorage.removeItem('pseudo');
+      localStorage.removeItem('playerId');
+      navigate('/');
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du statut de prêt", error);
+      console.error('Erreur lors de la déconnexion :', error);
     }
   };
 
-  // Vérifie si tous les joueurs sont prêts
-  const allReady = players && players.every((player) => player.isReady);
+  const handleThemeUpdate = (theme) => {
+    setPlayerTheme({
+      name: theme.name,  // Nom du thème
+      color: theme.color, // Couleur du thème
+    });
+  };
+
+  // Charger les thèmes depuis Firestore
+  useEffect(() => {
+    const fetchThemes = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'themes'));
+        const themesList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setThemes(themesList); // Mettre à jour l'état avec les thèmes récupérés
+      } catch (error) {
+        console.error('Erreur lors de la récupération des thèmes :', error);
+      }
+    };
+
+    fetchThemes();
+  }, []); // Cette fonction est appelée une seule fois lors du montage du composant
+
+  // Récupérer la liste des joueurs
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      const playersQuery = query(collection(db, 'players'), where('sessionId', '==', sessionId));
+      const querySnapshot = await getDocs(playersQuery);
+      const playersList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPlayers(playersList);
+    };
+
+    fetchPlayers();
+  }, [sessionId]);
 
   return (
-    <div>
-      <h1>Lobby du jeu {gameId}</h1>
-      <p>Pseudo du joueur actuel: {pseudo}</p> {/* Afficher le pseudo */}
-      <PlayerLobby
-        gameId={gameId}
-        players={players}
-        handleReadyToggle={handleReadyToggle}
-        allReady={allReady}
-        pseudo={pseudo} // Passe le pseudo du joueur actuel
+    <div className='lobby'>
+      <PlayerInfo 
+        pseudo={pseudo} 
+        onLogout={handleLogout} 
+        theme={playerTheme}
+      />
+      <PlayerList 
+        players={players} 
+        sessionId={sessionId}
+      />
+      <ThemeSelection 
+        isOpen={isModalOpen} 
+        onClose={closeThemeSelection} 
+        themes={themes} 
+        onThemeUpdate={handleThemeUpdate}
       />
     </div>
   );

@@ -3,7 +3,7 @@ import { MongoClient } from 'mongodb';
 const MONGODB_URI = process.env.MONGODB_URI;
 
 export default async function handler(req, res) {
-  if (req.method === 'DELETE') {
+  if (req.method === 'POST') {
     const { sessionId } = req.body;
 
     if (!sessionId) {
@@ -19,23 +19,18 @@ export default async function handler(req, res) {
       const db = client.db('quiz');
       const playersCollection = db.collection('players');
 
-      // Vérifie si le joueur existe
-      const existingPlayer = await playersCollection.findOne({ sessionId });
-
-      if (!existingPlayer) {
-        client.close();
-        return res.status(404).json({ error: 'Aucun joueur trouvé avec le sessionId fourni' });
-      }
-
-      // Supprime le joueur
-      const result = await playersCollection.deleteOne({ sessionId });
+      // Mettre à jour le champ lastActive
+      const result = await playersCollection.updateOne(
+        { sessionId },
+        { $set: { lastActive: new Date() } }
+      );
 
       client.close();
 
-      if (result.deletedCount > 0) {
-        return res.status(200).json({ success: true, message: 'Joueur supprimé avec succès' });
+      if (result.matchedCount > 0) {
+        return res.status(200).json({ success: true, message: 'Activité mise à jour' });
       } else {
-        return res.status(500).json({ error: 'Erreur lors de la suppression du joueur' });
+        return res.status(404).json({ error: 'Aucun joueur trouvé avec le sessionId fourni' });
       }
     } catch (error) {
       console.error('Erreur serveur:', error);

@@ -1,0 +1,47 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Collection des lobbies
+    match /lobbies/{lobbyId} {
+
+      // Lecture autorisée pour tous les utilisateurs
+      allow read: if true;
+
+      // Règles pour la gestion des joueurs dans le lobby
+      service cloud.firestore {
+        match /databases/{database}/documents {
+          match /players/{playerId} {
+      
+            // Autoriser la création de documents pour tous les utilisateurs
+            allow create: if true;
+      
+            // Autoriser la lecture uniquement pour les utilisateurs authentifiés
+            // Vous pouvez changer cela si vous souhaitez restreindre davantage
+            allow read: if request.auth != null; // Exemple de restriction d'accès à la lecture pour les utilisateurs authentifiés
+      
+            // Autoriser la mise à jour uniquement si le playerId dans la requête correspond à l'ID du joueur
+            allow update: if request.auth != null && request.auth.uid == playerId;
+      
+            // Empêcher la suppression de documents
+            allow delete: if false;
+          }
+        }
+      }
+
+
+      // Gestion des questions du quiz dans le lobby
+      match /questions/{questionId} {
+        // Seul l'admin peut ajouter ou modifier des questions
+        allow create, update, delete: if request.auth != null && request.auth.uid == "admin_uid";
+        // Les joueurs peuvent lire les questions du quiz
+        allow read: if true;
+      }
+    }
+
+    // Accès à la page admin (par exemple pour gérer les questions ou résoudre des bugs)
+    match /admin/{adminId} {
+      allow read, write: if request.auth != null && 
+      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+  }
+}

@@ -1,0 +1,35 @@
+@use '../utils/mixins' as *;
+
+.lobby {
+    height: 100vh;
+    box-sizing: border-box;
+    @include desktop {
+        padding: 10px;
+    }
+    &__info {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: fit-content;
+        background-color: var(--background2);
+        @include desktop {
+            padding: 10px;
+            border-radius: 10px;
+        }
+        h1 {
+            @include desktop {
+                font-size: .5em;
+            }
+        }
+        span {
+            display: flex;
+            justify-content: space-between;
+            @include desktop {
+                font-size: .6em;
+            }
+            p {
+                font-weight: 800;
+            }
+        }
+    }
+}

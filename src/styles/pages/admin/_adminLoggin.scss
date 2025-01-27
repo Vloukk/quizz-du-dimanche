@@ -1,0 +1,29 @@
+.adminLogin {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    &__form {
+        display: flex;
+        gap: 10px;
+        input {
+            background-color: var(--background2);
+            border: 2px solid var(--background2);
+            padding: 5px 20px;
+            border-radius: 5px;
+            color: var(--foreground);
+            font-weight: 800;
+            box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.378);
+        }
+        button {
+            border-radius: 5px;
+        }
+    }
+    p {
+        font-size: .8em;
+        font-weight: 300;
+        color: var(--foreground) !important;
+    }
+}

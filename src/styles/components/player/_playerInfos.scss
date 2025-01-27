@@ -1,0 +1,25 @@
+.playerInfos {
+    display: flex;
+    align-items: end;
+    gap: 30px;
+    background-color: var(--background2);
+    padding: 20px;
+    box-sizing: border-box;
+    width: fit-content;
+    border-radius: 10px;
+    .infos {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        &__pseudo, &__theme {
+            display: flex;
+            gap: 10px;
+            justify-content:space-between;
+            align-items: center;
+            font-size: .8em;
+            p {
+                font-weight: bold;
+            }
+        }
+    }
+}
