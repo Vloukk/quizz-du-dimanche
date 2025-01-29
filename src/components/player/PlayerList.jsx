@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../../firebase'; // Assure-toi que tu as bien l'instance de Firestore
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 
 const PlayerList = ({ sessionId }) => {
   const [players, setPlayers] = useState([]);
@@ -8,33 +8,30 @@ const PlayerList = ({ sessionId }) => {
   useEffect(() => {
     if (!sessionId) return;
 
-    const fetchPlayers = async () => {
-      try {
-        // Requête pour récupérer les joueurs dans ce lobby (en fonction du sessionId)
-        const playersQuery = query(collection(db, 'players'), where('sessionId', '==', sessionId));
-        const querySnapshot = await getDocs(playersQuery);
-        
-        console.log("Query snapshot:", querySnapshot);
+    // Créer une requête pour récupérer les joueurs dans ce lobby
+    const playersQuery = query(collection(db, 'players'), where('sessionId', '==', sessionId));
 
-        // Vérifie si la requête retourne des documents
-        if (!querySnapshot.empty) {
-          // Récupère tous les joueurs avec leurs données (pseudo, id, etc.)
-          const playersList = querySnapshot.docs.map(doc => ({
-            id: doc.id,  // ID du joueur
-            pseudo: doc.data().pseudo, // Pseudo du joueur
-            // Ajoute d'autres champs ici si nécessaire
-          }));
-          console.log("Joueurs récupérés:", playersList); // Log des joueurs récupérés
-          setPlayers(playersList);
-        } else {
-          console.log("Aucun joueur trouvé pour ce sessionId.");
-        }
-      } catch (error) {
-        console.error('Erreur lors de la récupération des joueurs:', error);
+    // Utiliser onSnapshot pour écouter les changements en temps réel
+    const unsubscribe = onSnapshot(playersQuery, (querySnapshot) => {
+      // Vérifie si la requête retourne des documents
+      if (!querySnapshot.empty) {
+        // Récupère tous les joueurs avec leurs données (pseudo, id, etc.)
+        const playersList = querySnapshot.docs.map(doc => ({
+          id: doc.id,  // ID du joueur
+          pseudo: doc.data().pseudo, // Pseudo du joueur
+          // Ajoute d'autres champs ici si nécessaire
+        }));
+
+        console.log("Joueurs récupérés en temps réel:", playersList); // Log des joueurs récupérés
+        setPlayers(playersList);
+      } else {
+        console.log("Aucun joueur trouvé pour ce sessionId.");
       }
-    };
+    });
 
-    fetchPlayers();
+    // Retourne une fonction de nettoyage pour arrêter l'écouteur lorsque le composant est démonté
+    return () => unsubscribe();
+
   }, [sessionId]);
 
   return (
