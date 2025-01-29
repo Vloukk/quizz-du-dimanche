@@ -10,21 +10,30 @@ import ThemeSelection from '../components/player/ThemeSelection';
 
 const Lobby = () => {
   const navigate = useNavigate();
-  const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId')); 
+  const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
   const [pseudo, setPseudo] = useState(localStorage.getItem('pseudo'));
-  const [playerId, setPlayerId] = useState(localStorage.getItem('playerId')); 
-  const [players, setPlayers] = useState([]); 
-  const [isModalOpen, setIsModalOpen] = useState(false); 
-  const [themes, setThemes] = useState([]); 
-  const [playerTheme, setPlayerTheme] = useState(null); 
-  const [usedThemeIds, setUsedThemeIds] = useState([]); // Liste des thèmes déjà utilisés
+  const [playerId, setPlayerId] = useState(localStorage.getItem('playerId'));
+  const [players, setPlayers] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [themes, setThemes] = useState([]);
+  const [playerTheme, setPlayerTheme] = useState(null);
+  const [usedThemeIds, setUsedThemeIds] = useState([]);
 
-  // Ferme la modal
+  // Charger le thème du localStorage au démarrage
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('playerTheme');
+    if (storedTheme) {
+      const theme = JSON.parse(storedTheme);
+      setPlayerTheme(theme); // Restaurer le thème
+    }
+  }, []); // Ce useEffect ne s'exécute qu'une fois au chargement du composant
+
+  // Fonction pour fermer la modal de sélection de thème
   const closeThemeSelection = () => {
     setIsModalOpen(false);
   };
 
-  /////////////////////////////////// fonctions pour gerer le theme
+  /////////////////////////////////// fonctions pour gérer le thème
   useEffect(() => {
     const checkPlayerTheme = async () => {
       try {
@@ -98,31 +107,33 @@ const Lobby = () => {
       setUsedThemeIds(prev => [...prev, theme.id]);
   
       setIsModalOpen(false); // Fermer la modal après sélection
-  
       console.log('Nouveau thème sélectionné:', theme); // Ajoute ceci pour voir si la mise à jour est bien effectuée
     } catch (error) {
       console.error('Erreur lors de la mise à jour du thème :', error);
     }
   };
-  
 
-  // Utilisation d'onSnapshot pour écouter en temps réel les thèmes utilisés
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Utilisation d'onSnapshot pour écouter en temps réel les joueurs et les thèmes
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'players'), (querySnapshot) => {
-      const usedThemes = querySnapshot.docs
-        .map(doc => doc.data().themeId)
-        .filter(themeId => themeId); // Filtrer les `null` ou `undefined`
+    console.log("Session ID utilisé pour récupérer les joueurs:", sessionId);
 
-      setUsedThemeIds(usedThemes); // Mettre à jour les thèmes utilisés en temps réel
-    });
+    const unsubscribePlayers = onSnapshot(
+      query(collection(db, 'players')),
+      (querySnapshot) => {
+        const playersList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPlayers(playersList); // Mettre à jour la liste des joueurs
+      },
+      (error) => {
+        console.error('Erreur lors de l\'écoute des joueurs :', error);
+      }
+    );
 
-    // Nettoyer l'abonnement quand le composant est démonté
-    return () => unsubscribe();
-  }, []);
-
-  // Utilisation d'onSnapshot pour écouter en temps réel les thèmes disponibles
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'themes'), (querySnapshot) => {
+    const unsubscribeThemes = onSnapshot(collection(db, 'themes'), (querySnapshot) => {
       const themesList = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -130,24 +141,12 @@ const Lobby = () => {
       setThemes(themesList);
     });
 
-    // Nettoyer l'abonnement quand le composant est démonté
-    return () => unsubscribe();
-  }, []);
-
-  // Charger la liste des joueurs
-  useEffect(() => {
-    const fetchPlayers = async () => {
-      const playersQuery = query(collection(db, 'players'), where('sessionId', '==', sessionId));
-      const querySnapshot = await getDocs(playersQuery);
-      const playersList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPlayers(playersList);
+    // Nettoyer les abonnements à l'écoute quand le composant est démonté
+    return () => {
+      unsubscribePlayers();
+      unsubscribeThemes();
     };
-
-    fetchPlayers();
-  }, [sessionId]);
+  }, [sessionId]); // L'effet se déclenche lorsque `sessionId` change
 
   // Fonction pour gérer la déconnexion
   const handleLogout = async () => {
@@ -167,7 +166,7 @@ const Lobby = () => {
       localStorage.removeItem('sessionId');
       localStorage.removeItem('pseudo');
       localStorage.removeItem('playerId');
-      localStorage.removeItem('themeSelected');
+      localStorage.removeItem('playerTheme'); // Supprimer également le thème
       // Mettre à jour l'état des thèmes utilisés
       const updatedUsedThemes = usedThemeIds.filter(themeId => themeId !== playerTheme?.id);
       setUsedThemeIds(updatedUsedThemes);
@@ -178,6 +177,7 @@ const Lobby = () => {
     }
   };
 
+  // Filtrer les thèmes disponibles en excluant ceux déjà utilisés
   const availableThemes = themes.filter(theme => 
     !usedThemeIds.includes(theme.id) || playerTheme?.id === theme.id
   );
@@ -188,11 +188,12 @@ const Lobby = () => {
         pseudo={pseudo} 
         onLogout={handleLogout} 
         theme={playerTheme}
-        onChangeTheme={() => setIsModalOpen(true)}
+        onChangeTheme={() => setIsModalOpen(true)} // Ouvrir la modal pour changer de thème
       />
       <PlayerList 
         players={players} 
         sessionId={sessionId}
+        loading={players.length === 0}
       />
       <ThemeSelection 
         isOpen={isModalOpen} 

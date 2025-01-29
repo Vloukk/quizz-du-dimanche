@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { db } from '../firebase'; // Assurez-vous que vous avez bien l'instance de Firestore
 import { collection, addDoc } from 'firebase/firestore';
@@ -30,6 +30,14 @@ const Home = () => {
   const [pseudo, setPseudo] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Vérifie si l'utilisateur est déjà connecté avec un pseudo
+    const storedPseudo = localStorage.getItem('pseudo');
+    if (storedPseudo) {
+      navigate(`/lobby/${localStorage.getItem('sessionId')}`); // Redirige vers le lobby si déjà connecté
+    }
+  }, [navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -58,17 +66,20 @@ const Home = () => {
 
   return (
     <section className="home">
-     <Link to="/admin">Login</Link>
+      <Link to="/admin">Login</Link>
       <div className="home__form">
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={pseudo}
-            onChange={(e) => setPseudo(e.target.value)}
-            placeholder="Entrez votre pseudo ..."
-          />
-          <button type="submit">Let's gooo !</button>
-        </form>
+        {/* Si un pseudo est déjà stocké, ne pas afficher le formulaire */}
+        {!localStorage.getItem('pseudo') && (
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              value={pseudo}
+              onChange={(e) => setPseudo(e.target.value)}
+              placeholder="Entrez votre pseudo ..."
+            />
+            <button type="submit">Let's gooo !</button>
+          </form>
+        )}
       </div>
     </section>
   );
