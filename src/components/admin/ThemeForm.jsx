@@ -69,55 +69,63 @@ const ThemeForm = ({ themeToEdit, onCancel, onSave }) => {
 
   return (
     <form onSubmit={handleSaveTheme} className='themeForm'>
-      <h1>Gestion des Thèmes</h1>
-      <h2>{themeToEdit ? 'Modifier le Thème' : 'Ajouter un Nouveau Thème'}</h2>
-      <input
-        type="text"
-        placeholder="Nom du thème"
-        value={newThemeName}
-        onChange={(e) => setNewThemeName(e.target.value)}
-        required
-      />
-      <input
-        type="color"
-        value={newThemeColor}
-        onChange={(e) => setNewThemeColor(e.target.value)}
-        required
-      />
-
-      {/* Affichage des 10 questions */}
-      {newThemeQuestions.map((question, index) => (
-        <div key={index} className='themeForm__list'>
+        <h2>{themeToEdit ? 'Modifier le Thème' : 'Ajouter un Nouveau Thème'}</h2>
+        <div className="themeForm__info">
           <input
+            className='text'
             type="text"
-            placeholder={`Question ${index + 1}`}
-            value={question.question}
-            onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
+            placeholder="Nom du thème"
+            value={newThemeName}
+            onChange={(e) => setNewThemeName(e.target.value)}
             required
           />
           <input
-            type="number"
-            placeholder="Temps imparti (en secondes)"
-            value={question.timeLimit}
-            onChange={(e) => handleQuestionChange(index, 'timeLimit', e.target.value)}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Réponse correcte"
-            value={question.correctAnswer}
-            onChange={(e) => handleQuestionChange(index, 'correctAnswer', e.target.value)}
+            className='color'
+            type="color"
+            value={newThemeColor}
+            onChange={(e) => setNewThemeColor(e.target.value)}
             required
           />
         </div>
-      ))}
-
-      <button type="submit" disabled={!(newThemeName && newThemeColor && newThemeQuestions.every(q => q.question && q.timeLimit && q.correctAnswer))}>
-        {themeToEdit ? 'Mettre à Jour' : 'Ajouter'}
-      </button>
-      <button type="button" onClick={onCancel}>
-        Annuler
-      </button>
+        <div className="themeForm__title">
+            <span>Questions</span>
+            <span>Temps (s)</span>
+            <span>Réponses</span>
+        </div>
+        {/* Affichage des 10 questions */}
+        {newThemeQuestions.map((question, index) => (
+          <div key={index} className='themeForm__list'>
+            <input
+              type="text"
+              placeholder={`Question ${index + 1}`}
+              value={question.question}
+              onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
+              required
+            />
+            <input
+              type="number"
+              placeholder="Temps imparti (en secondes)"
+              value={question.timeLimit}
+              onChange={(e) => handleQuestionChange(index, 'timeLimit', e.target.value)}
+              required
+            />
+            <input
+              type="text"
+              placeholder="Réponse correcte"
+              value={question.correctAnswer}
+              onChange={(e) => handleQuestionChange(index, 'correctAnswer', e.target.value)}
+              required
+            />
+          </div>
+        ))}
+        <div className="themeForm__btn">
+          <button type="submit" disabled={!(newThemeName && newThemeColor && newThemeQuestions.every(q => q.question && q.timeLimit && q.correctAnswer))}>
+            {themeToEdit ? 'Mettre à Jour' : 'Ajouter'}
+          </button>
+          <button type="button" onClick={onCancel}>
+            Annuler
+          </button>
+        </div>
     </form>
   );
 };

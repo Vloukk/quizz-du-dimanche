@@ -1,20 +1,28 @@
 .adminPage {
     padding: 40px;
     box-sizing: border-box;
+    color: var(--font-color);
+    &__header {
+        display: flex;
+        justify-content: end;
+        padding-bottom: 40px;
+        box-sizing: border-box;
+    }
     &__themes {
         display: flex;
         gap: 50px;
         .themes {
             &__list {
-                background-color: var(--background2);
+                background-color: var(--background1);
+                border: var(--background2) 1px solid;
                 display: flex;
                 flex-direction: column;
                 width: 25vw;
-                padding: 20px;
+                padding: 20px 10px;
                 box-sizing: border-box;
                 border-radius: 10px;
                 h2 {
-                    padding-bottom: 10px;
+                    padding: 10px 20px 20px 10px;
                 }
                 li {
                     .themeCard {
@@ -22,6 +30,7 @@
                         &__name {
                             display: flex;
                             gap: 10px;
+                            color: var(--foreground);
                         }
                         &__buttons {
                             display: flex;

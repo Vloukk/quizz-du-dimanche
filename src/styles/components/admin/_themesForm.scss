@@ -1,8 +1,35 @@
 .themeForm {
     width: 100%;
-    background-color: var(--background2);
+    background-color: var(--background1);
+    border: var(--background3) 1px solid;
     padding: 20px;
     border-radius: 10px;
+    color: var(--font-color);
+    h2 {
+        padding: 30px 0;
+    }
+    &__info {
+        display: flex;
+        gap: 10px;
+        .text {
+            padding: 10px 15px;
+        }
+        .color, .text {
+            height: auto;
+            border-radius: 5px;
+        }
+        .color {
+            cursor: pointer;
+        }
+    }
+    &__title {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        padding:40px 10px 10px 10px;
+        box-sizing: border-box;
+        color: var();
+    }
     &__list {
         width: 100%;
         display: flex;
@@ -11,7 +38,15 @@
         input {
             width: 100%;
             margin-top: 10px;
-            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: .8em;
+            font-weight: 300;
         }
+    }
+    &__btn {
+        margin-top: 50px;
+        display: flex;
+        gap: 20px;
     }
 }

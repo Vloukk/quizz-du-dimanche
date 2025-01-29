@@ -8,8 +8,8 @@
     flex-direction: column;
     gap: 20px;
     width: 15vw;
-    background-color: var(--background2);
     box-sizing: border-box;
+    border: var(--background2) 1px solid;
     @include desktop {
         top: 10px;
         right: 10px;

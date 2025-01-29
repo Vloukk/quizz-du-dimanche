@@ -1,8 +1,26 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { db } from '../../firebase'; // Assurez-vous que vous avez bien l'instance de Firestore
 import { collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { gsap } from 'gsap';
 
-const ThemeSelection = ({ isOpen, onClose, themes, onThemeUpdate }) => {
+const ThemeSelection = ({ isOpen, onClose, themes, usedThemeIds, onThemeUpdate }) => {
+
+  useEffect(() => {
+    if (isOpen) {
+      // Animer chaque carte de thème lorsque la modal s'ouvre
+      gsap.from('.theme-item', {
+        y: 120,         // Position de départ
+        opacity: 1,     // Rendre invisible au départ
+        stagger: 0.1,   // Ajouter un petit délai entre chaque animation
+        duration: 0.6,  // Durée de l'animation
+        ease: 'power2.inOut', // Facilité d'animation
+      });
+    }
+  }, [isOpen]);
+
+  // Filtrer les thèmes pour ne pas afficher ceux déjà utilisés
+  const availableThemes = themes.filter(theme => !usedThemeIds.includes(theme.id));
+
   const handleThemeSelect = async (theme) => {
     try {
       const playerId = localStorage.getItem('playerId');
@@ -10,29 +28,25 @@ const ThemeSelection = ({ isOpen, onClose, themes, onThemeUpdate }) => {
         console.log('Player ID not found');
         return;
       }
-
-      // Créer la requête pour récupérer le joueur avec le playerId
+  
       const playerQuery = query(
         collection(db, 'players'),
-        where('playerId', '==', playerId) // Utilisation de `where` pour filtrer par playerId
+        where('playerId', '==', playerId)
       );
-
+  
       const querySnapshot = await getDocs(playerQuery);
-
-      // Vérification si le joueur existe
+  
       if (!querySnapshot.empty) {
-        const playerDoc = querySnapshot.docs[0]; // Le joueur correspondant
-        const playerDocRef = playerDoc.ref; // Référence du document du joueur
-
-        // Mise à jour du thème du joueur
+        const playerDoc = querySnapshot.docs[0]; 
+        const playerDocRef = playerDoc.ref;
+  
         await updateDoc(playerDocRef, {
           themeId: theme.id,
-          themeColor: theme.color, // On peut également stocker la couleur du thème si nécessaire
+          themeColor: theme.color,
         });
-
+  
         console.log('Thème sélectionné et mis à jour dans Firestore');
-
-        // Appeler la fonction de mise à jour pour mettre à jour l'état dans Lobby
+        localStorage.setItem('themeSelected', 'true'); // Marquer le thème comme sélectionné
         onThemeUpdate(theme);
       } else {
         console.log('Aucun joueur trouvé avec cet ID');
@@ -40,11 +54,10 @@ const ThemeSelection = ({ isOpen, onClose, themes, onThemeUpdate }) => {
     } catch (error) {
       console.error('Erreur lors de la mise à jour du thème:', error);
     }
-
-    // Fermer la modal après la sélection d'un thème
+  
     onClose();
   };
-
+  
   if (!isOpen) return null; // Si la modal est fermée, ne rien afficher
 
   return (
@@ -52,7 +65,7 @@ const ThemeSelection = ({ isOpen, onClose, themes, onThemeUpdate }) => {
       <h2>Sélectionner un Thème</h2>
       <div className="modal-content">
         <div className="themes">
-          {themes.map((theme) => (
+          {availableThemes.map((theme) => (
             <div
               key={theme.id}
               className="theme-item"
@@ -68,5 +81,5 @@ const ThemeSelection = ({ isOpen, onClose, themes, onThemeUpdate }) => {
   );
 };
 
-
 export default ThemeSelection;
+

@@ -1,7 +1,6 @@
 @use '../utils/mixins' as *;
 
 .home {
-    background-color: var(--background);
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -10,23 +9,29 @@
     gap: 15vh;
     a {
         position: absolute;
-        top: 0;
-        right: 0;
-        padding: 40px;
-        color: var(--foreground);
+        top: 40px;
+        right: 40px;
+        padding: 10px 20px;
+        color: var(--font-color);
+        font-size: .8em;
+        border: var(--background2) 1px solid;
+        border-radius: 5px;
+        transition: all ease-in-out .2s;
+        &:hover {
+            border: 1px solid var(--background3) !important;
+        }
     }
     &__form {
         form {
             display: flex;
             gap: 10px;
             input {
-                background-color: var(--background2);
-                border: 2px solid var(--background2);
                 padding: 10px 20px;
-                border-radius: 10px;
-                color: var(--foreground);
+                border-radius: 5px;
                 font-weight: 800;
-                box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.378);
+            }
+            button {
+                color: var(--foreground) !important;
             }
         }
     }

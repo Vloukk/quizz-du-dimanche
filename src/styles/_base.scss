@@ -1,14 +1,59 @@
 
 #root {
-    --background: #0c0c0c;
-    --foreground: #efefef;
-    --background2 : #080808;
+    --background: #0A0A0A;
+    --foreground: #e4e4e4;
+    --background2 : #2B2B2B;
+    --background3 : #131313;
 
-    color: var(--foreground);
+    --font-color : #393939;
+
+    
+    color: var(--font-color);
     background-color: var(--background);
+    font-weight: 700;
 }
 
 *,
 html {
     font-family: 'nunito sans';
 } 
+
+input {
+    color: var(--font-color) !important;
+    border: var(--background2) 1px solid !important;
+    background-color: var(--background1) !important;
+    border: none;
+}
+
+button {
+    background-color: var(--background) !important;
+    border: 1px solid var(--background2) !important;
+    color: var(--font-color) !important;
+    padding:10px 20px;
+    transition: all ease-in-out .2s;
+    border: none;
+    border-radius: 5px !important;
+    cursor: pointer;
+    &:hover {
+        border: 1px solid var(--background3) !important;
+    }
+}
+
+//////////////////////
+
+
+::-webkit-scrollbar {
+    width: 10px;
+    background-color: #0A0A0A;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #0A0A0A;
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #131313;
+    border-radius: 5px;
+  }
+  
