@@ -28,13 +28,13 @@ const addPlayer = async (pseudo, playerId, sessionId) => {
 
 const Home = () => {
   const [pseudo, setPseudo] = useState('');
+  const [sessionIdInput, setSessionIdInput] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Vérifie si l'utilisateur est déjà connecté avec un pseudo
     const storedPseudo = localStorage.getItem('pseudo');
     if (storedPseudo) {
-      navigate(`/lobby/${localStorage.getItem('sessionId')}`); // Redirige vers le lobby si déjà connecté
+      navigate(`/lobby/${localStorage.getItem('sessionId')}`);
     }
   }, [navigate]);
 
@@ -46,16 +46,14 @@ const Home = () => {
       return;
     }
 
-    // Récupérer ou générer un sessionId
-    const sessionId = localStorage.getItem('sessionId') || uuidv4();
+    // Vérifier si un sessionId existe déjà dans localStorage, sinon prendre celui de l'entrée
+    const sessionId = sessionIdInput || localStorage.getItem('sessionId') || uuidv4();
     const playerId = uuidv4(); // Génère un ID unique pour ce joueur
-
-    console.log("ID généré pour le joueur:", playerId);
 
     // Ajouter le joueur à Firestore avec son pseudo et playerId
     await addPlayer(pseudo, playerId, sessionId);
 
-    // Stocker le pseudo, sessionId et playerId dans localStorage avant de naviguer
+    // Stocker les informations dans localStorage avant de naviguer
     localStorage.setItem('pseudo', pseudo);
     localStorage.setItem('sessionId', sessionId);
     localStorage.setItem('playerId', playerId);
@@ -68,7 +66,6 @@ const Home = () => {
     <section className="home">
       <Link to="/admin">Login</Link>
       <div className="home__form">
-        {/* Si un pseudo est déjà stocké, ne pas afficher le formulaire */}
         {!localStorage.getItem('pseudo') && (
           <form onSubmit={handleSubmit}>
             <input
@@ -76,6 +73,12 @@ const Home = () => {
               value={pseudo}
               onChange={(e) => setPseudo(e.target.value)}
               placeholder="Entrez votre pseudo ..."
+            />
+            <input
+              type="text"
+              value={sessionIdInput}
+              onChange={(e) => setSessionIdInput(e.target.value)}
+              placeholder="Entrez un sessionId ..."
             />
             <button type="submit">Let's gooo !</button>
           </form>

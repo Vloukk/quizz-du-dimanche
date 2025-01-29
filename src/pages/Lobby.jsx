@@ -28,7 +28,7 @@ const Lobby = () => {
     }
   }, []); // Ce useEffect ne s'exécute qu'une fois au chargement du composant
 
-  // Fonction pour fermer la modal de sélection de thème
+  // Ferme la modal
   const closeThemeSelection = () => {
     setIsModalOpen(false);
   };
@@ -107,33 +107,31 @@ const Lobby = () => {
       setUsedThemeIds(prev => [...prev, theme.id]);
   
       setIsModalOpen(false); // Fermer la modal après sélection
+  
       console.log('Nouveau thème sélectionné:', theme); // Ajoute ceci pour voir si la mise à jour est bien effectuée
     } catch (error) {
       console.error('Erreur lors de la mise à jour du thème :', error);
     }
   };
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  // Utilisation d'onSnapshot pour écouter en temps réel les joueurs et les thèmes
+  // Utilisation d'onSnapshot pour écouter en temps réel les thèmes utilisés
   useEffect(() => {
-    console.log("Session ID utilisé pour récupérer les joueurs:", sessionId);
+    const unsubscribe = onSnapshot(collection(db, 'players'), (querySnapshot) => {
+      const usedThemes = querySnapshot.docs
+        .map(doc => doc.data().themeId)
+        .filter(themeId => themeId); // Filtrer les `null` ou `undefined`
+  
+      setUsedThemeIds(usedThemes); // Mettre à jour les thèmes utilisés en temps réel
+      console.log('Used themes:', usedThemes); // Ajoute un log pour voir les thèmes utilisés
+    });
+  
+    // Nettoyer l'abonnement quand le composant est démonté
+    return () => unsubscribe();
+  }, []);
 
-    const unsubscribePlayers = onSnapshot(
-      query(collection(db, 'players')),
-      (querySnapshot) => {
-        const playersList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setPlayers(playersList); // Mettre à jour la liste des joueurs
-      },
-      (error) => {
-        console.error('Erreur lors de l\'écoute des joueurs :', error);
-      }
-    );
-
-    const unsubscribeThemes = onSnapshot(collection(db, 'themes'), (querySnapshot) => {
+  // Utilisation d'onSnapshot pour écouter en temps réel les thèmes disponibles
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'themes'), (querySnapshot) => {
       const themesList = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -141,12 +139,24 @@ const Lobby = () => {
       setThemes(themesList);
     });
 
-    // Nettoyer les abonnements à l'écoute quand le composant est démonté
-    return () => {
-      unsubscribePlayers();
-      unsubscribeThemes();
+    // Nettoyer l'abonnement quand le composant est démonté
+    return () => unsubscribe();
+  }, []);
+
+  // Charger la liste des joueurs
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      const playersQuery = query(collection(db, 'players'), where('sessionId', '==', sessionId));
+      const querySnapshot = await getDocs(playersQuery);
+      const playersList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setPlayers(playersList);
     };
-  }, [sessionId]); // L'effet se déclenche lorsque `sessionId` change
+
+    fetchPlayers();
+  }, [sessionId]);
 
   // Fonction pour gérer la déconnexion
   const handleLogout = async () => {
@@ -177,10 +187,11 @@ const Lobby = () => {
     }
   };
 
-  // Filtrer les thèmes disponibles en excluant ceux déjà utilisés
-  const availableThemes = themes.filter(theme => 
-    !usedThemeIds.includes(theme.id) || playerTheme?.id === theme.id
-  );
+  const availableThemes = themes.filter(theme => {
+    // Si le thème est utilisé, mais c'est celui du joueur, on l'affiche quand même
+    return !usedThemeIds.includes(theme.id) || playerTheme?.id === theme.id;
+  });
+  
 
   return (
     <div className='lobby'>
@@ -193,7 +204,6 @@ const Lobby = () => {
       <PlayerList 
         players={players} 
         sessionId={sessionId}
-        loading={players.length === 0}
       />
       <ThemeSelection 
         isOpen={isModalOpen} 
