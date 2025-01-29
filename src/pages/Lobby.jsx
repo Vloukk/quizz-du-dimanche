@@ -24,6 +24,9 @@ const Lobby = () => {
   // 🛑 Vérifier si le joueur est inscrit, sinon rediriger vers Home
   useEffect(() => {
     const checkIfPlayerExists = async () => {
+      console.log('sessionId', sessionId);
+      console.log('playerId', playerId);
+      
       if (!playerId) {
         navigate(`/lobby/${sessionId}`);
         return;
@@ -35,7 +38,7 @@ const Lobby = () => {
       if (querySnapshot.empty) {
         localStorage.removeItem('playerId');
         localStorage.removeItem('pseudo');
-        navigate(`/lobby/${sessionId}`);
+        navigate(`/?sessionId=${sessionId}`);
       } else {
         setIsChecking(false);
       }
