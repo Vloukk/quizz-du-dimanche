@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../firebase'; // Assure-toi que tu as bien l'instance de Firestore
 import { collection, query, where, getDocs, deleteDoc, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 
@@ -10,14 +10,48 @@ import ThemeSelection from '../components/player/ThemeSelection';
 
 const Lobby = () => {
   const navigate = useNavigate();
-  const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId'));
+  const { sessionId } = useParams(); // Récupère l'ID de la session depuis l'URL
+
   const [pseudo, setPseudo] = useState(localStorage.getItem('pseudo'));
   const [playerId, setPlayerId] = useState(localStorage.getItem('playerId'));
   const [players, setPlayers] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [themes, setThemes] = useState([]);
   const [playerTheme, setPlayerTheme] = useState(null);
   const [usedThemeIds, setUsedThemeIds] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // 🛑 Vérifier si le joueur est inscrit, sinon rediriger vers Home
+  useEffect(() => {
+    const checkIfPlayerExists = async () => {
+      if (!playerId) {
+        navigate(`/?sessionId=${sessionId}`);
+        return;
+      }
+
+      const playerQuery = query(collection(db, 'players'), where('playerId', '==', playerId));
+      const querySnapshot = await getDocs(playerQuery);
+
+      if (querySnapshot.empty) {
+        localStorage.removeItem('playerId');
+        localStorage.removeItem('pseudo');
+        navigate(`/?sessionId=${sessionId}`);
+      } else {
+        setIsChecking(false);
+      }
+    };
+
+    checkIfPlayerExists();
+  }, [playerId, sessionId, navigate]);
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('playerTheme');
+    if (storedTheme) {
+      setPlayerTheme(JSON.parse(storedTheme));
+    }
+  }, []);
+
+  //////////////////////////////
 
   // Charger le thème du localStorage au démarrage
   useEffect(() => {
@@ -116,18 +150,28 @@ const Lobby = () => {
 
   // Utilisation d'onSnapshot pour écouter en temps réel les thèmes utilisés
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'players'), (querySnapshot) => {
-      const usedThemes = querySnapshot.docs
-        .map(doc => doc.data().themeId)
-        .filter(themeId => themeId); // Filtrer les `null` ou `undefined`
+    const playersQuery = query(collection(db, 'players'), where('sessionId', '==', sessionId));
   
-      setUsedThemeIds(usedThemes); // Mettre à jour les thèmes utilisés en temps réel
-      console.log('Used themes:', usedThemes); // Ajoute un log pour voir les thèmes utilisés
+    const unsubscribe = onSnapshot(playersQuery, (querySnapshot) => {
+      const playersList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+  
+      setPlayers(playersList);
+  
+      // 🔥 Mettre à jour la liste des thèmes utilisés en fonction des joueurs connectés
+      const usedThemes = playersList
+        .map(player => player.themeId)
+        .filter(themeId => themeId); // Filtrer les `null` ou `undefined`
+      
+      setUsedThemeIds(usedThemes);
     });
   
-    // Nettoyer l'abonnement quand le composant est démonté
     return () => unsubscribe();
-  }, []);
+  }, [sessionId]);
+  
+  
 
   // Utilisation d'onSnapshot pour écouter en temps réel les thèmes disponibles
   useEffect(() => {
@@ -191,6 +235,9 @@ const Lobby = () => {
     // Si le thème est utilisé, mais c'est celui du joueur, on l'affiche quand même
     return !usedThemeIds.includes(theme.id) || playerTheme?.id === theme.id;
   });
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////
+  
   
 
   return (

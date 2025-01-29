@@ -1,35 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { db } from '../firebase'; // Assurez-vous que vous avez bien l'instance de Firestore
+import { useNavigate, useLocation } from 'react-router-dom';
+import { db } from '../firebase';
 import { collection, addDoc } from 'firebase/firestore';
-import { v4 as uuidv4 } from 'uuid'; // Générer un ID unique pour le joueur
-
-// Fonction pour ajouter un joueur dans Firestore
-const addPlayer = async (pseudo, playerId, sessionId) => {
-  try {
-    const playerData = {
-      pseudo: pseudo,
-      playerId: playerId, // ID que vous avez généré manuellement
-      createdAt: new Date(),
-      sessionId: sessionId, // Ajouter le sessionId pour lier ce joueur à la session
-      themeId: null, // Par défaut, le joueur n'a pas encore choisi de thème
-      themeColor: null, // Par défaut, il n'a pas encore de couleur de thème
-    };
-
-    // Ajouter le document à la collection 'players'
-    const docRef = await addDoc(collection(db, "players"), playerData);
-    console.log("Nouveau joueur ajouté avec ID : ", docRef.id); // ID généré automatiquement pour le document
-
-    return docRef.id;
-  } catch (error) {
-    console.error("Erreur lors de l'ajout du joueur :", error);
-  }
-};
+import { v4 as uuidv4 } from 'uuid';
 
 const Home = () => {
-  const [pseudo, setPseudo] = useState('');
-  const [sessionIdInput, setSessionIdInput] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const urlSessionId = queryParams.get('sessionId'); // Récupère sessionId depuis l'URL
+
+  const [pseudo, setPseudo] = useState('');
+  const [sessionIdInput, setSessionIdInput] = useState(urlSessionId || '');
+  const [isJoiningFromLink, setIsJoiningFromLink] = useState(!!urlSessionId); // Vérifie si l'on rejoint via un lien
 
   useEffect(() => {
     const storedPseudo = localStorage.getItem('pseudo');
@@ -46,25 +29,27 @@ const Home = () => {
       return;
     }
 
-    // Vérifier si un sessionId existe déjà dans localStorage, sinon prendre celui de l'entrée
     const sessionId = sessionIdInput || localStorage.getItem('sessionId') || uuidv4();
-    const playerId = uuidv4(); // Génère un ID unique pour ce joueur
+    const playerId = uuidv4();
 
-    // Ajouter le joueur à Firestore avec son pseudo et playerId
-    await addPlayer(pseudo, playerId, sessionId);
+    await addDoc(collection(db, "players"), {
+      pseudo: pseudo,
+      playerId: playerId,
+      createdAt: new Date(),
+      sessionId: sessionId,
+      themeId: null,
+      themeColor: null,
+    });
 
-    // Stocker les informations dans localStorage avant de naviguer
     localStorage.setItem('pseudo', pseudo);
     localStorage.setItem('sessionId', sessionId);
     localStorage.setItem('playerId', playerId);
 
-    // Naviguer vers le lobby avec l'ID de la session
     navigate(`/lobby/${sessionId}`);
   };
 
   return (
     <section className="home">
-      <Link to="/admin">Login</Link>
       <div className="home__form">
         {!localStorage.getItem('pseudo') && (
           <form onSubmit={handleSubmit}>
@@ -74,12 +59,14 @@ const Home = () => {
               onChange={(e) => setPseudo(e.target.value)}
               placeholder="Entrez votre pseudo ..."
             />
-            <input
-              type="text"
-              value={sessionIdInput}
-              onChange={(e) => setSessionIdInput(e.target.value)}
-              placeholder="Entrez un sessionId ..."
-            />
+            {!isJoiningFromLink && ( // Masquer le champ sessionId si l'utilisateur rejoint via un lien
+              <input
+                type="text"
+                value={sessionIdInput}
+                onChange={(e) => setSessionIdInput(e.target.value)}
+                placeholder="Entrez un sessionId ..."
+              />
+            )}
             <button type="submit">Let's gooo !</button>
           </form>
         )}
