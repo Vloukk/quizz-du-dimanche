@@ -25,7 +25,7 @@ const Lobby = () => {
   useEffect(() => {
     const checkIfPlayerExists = async () => {
       if (!playerId) {
-        navigate(`/?sessionId=${sessionId}`);
+        navigate(`/lobby/${sessionId}`);
         return;
       }
 
@@ -35,7 +35,7 @@ const Lobby = () => {
       if (querySnapshot.empty) {
         localStorage.removeItem('playerId');
         localStorage.removeItem('pseudo');
-        navigate(`/?sessionId=${sessionId}`);
+        navigate(`/lobby/${sessionId}`);
       } else {
         setIsChecking(false);
       }
