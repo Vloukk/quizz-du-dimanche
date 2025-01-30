@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../firebase';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import ThemeForm from '../../components/admin/ThemeForm';
+import PlayersModal from './PlayerModal';
+import gsap from 'gsap';
 
 const AdminPage = () => {
   const navigate = useNavigate();
   const [themes, setThemes] = useState([]);
   const [editingTheme, setEditingTheme] = useState(null);
+  const [isPlayersModalOpen, setIsPlayersModalOpen] = useState(false);
+  const modalRef = useRef(null); // Ref pour la modal
 
-  // Vérifier si l'utilisateur est connecté en tant qu'admin
   useEffect(() => {
     const isAdmin = localStorage.getItem('isAdmin');
     if (!isAdmin) {
@@ -17,7 +20,6 @@ const AdminPage = () => {
     }
   }, [navigate]);
 
-  // Récupérer les thèmes
   const fetchThemes = async () => {
     try {
       const themesSnapshot = await getDocs(collection(db, 'themes'));
@@ -31,37 +33,58 @@ const AdminPage = () => {
     }
   };
 
-  // Charger les thèmes au montage de la page
   useEffect(() => {
     fetchThemes();
   }, []);
 
-  // Supprimer un thème
   const handleThemeDelete = async (themeId) => {
     try {
-      const themeRef = doc(db, 'themes', themeId);
-      await deleteDoc(themeRef);
+      await deleteDoc(doc(db, 'themes', themeId));
       setThemes((prevThemes) => prevThemes.filter((theme) => theme.id !== themeId));
     } catch (error) {
       console.error('Erreur lors de la suppression du thème :', error);
     }
   };
 
-  // Annuler l'édition
   const handleCancelEdit = () => {
     setEditingTheme(null);
   };
 
-  // Gérer la déconnexion
   const handleLogout = () => {
-    localStorage.removeItem('isAdmin'); // Supprime la valeur "isAdmin"
-    navigate('/'); // Redirige vers la page de connexion
+    localStorage.removeItem('isAdmin');
+    navigate('/');
+  };
+
+  // Fonction pour fermer la modal avec l’animation GSAP
+  const closeModalWithAnimation = () => {
+    if (modalRef.current) {
+      gsap.to(modalRef.current, {
+        x: "-100%", // Cache vers la gauche
+        duration: 0.5,
+        ease: "power3.in",
+        onComplete: () => {
+          setIsPlayersModalOpen(false);
+        },
+      });
+    }
   };
 
   return (
     <div className="adminPage">
-      {/* Bouton de déconnexion */}
       <div className="adminPage__header">
+        <button 
+          onClick={() => {
+            if (isPlayersModalOpen) {
+              closeModalWithAnimation();
+            } else {
+              setIsPlayersModalOpen(true);
+            }
+          }} 
+          className="playersBtn"
+        >
+          {isPlayersModalOpen ? "Fermer" : "Voir les joueurs"}
+        </button>
+
         <button onClick={handleLogout} className="logoutBtn">
           Se Déconnecter
         </button>
@@ -78,7 +101,6 @@ const AdminPage = () => {
               <li key={theme.id}>
                 <div className="themeCard" style={{ backgroundColor: theme.color, padding: '10px', margin: '5px' }}>
                   <div className="themeCard__name">
-                    <p>Nom :</p>
                     <h3>{theme.name}</h3>
                   </div>
                   <div className="themeCard__buttons">
@@ -91,6 +113,12 @@ const AdminPage = () => {
           )}
         </ul>
       </div>
+      
+      <PlayersModal 
+        isOpen={isPlayersModalOpen} 
+        onClose={() => setIsPlayersModalOpen(false)} 
+        modalRef={modalRef} // On passe la ref ici
+      />
     </div>
   );
 };

@@ -1,0 +1,99 @@
+/* Styles de la modal */
+.playerModal {
+    z-index: 10;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    &__content {
+        background-color: var(--background4);
+        box-shadow: rgba(0, 0, 0, 0.137) 0px 22px 20px 4px;
+        padding: 20px;
+        position: relative;
+        min-width: 300px;
+        width: 25vw;
+        padding: 150px 20px;
+        box-sizing: border-box;
+        .content {
+            &__header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                .info-icon {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 20px;
+                    height: 20px;
+                    border: 1px solid rgba(255, 255, 255, 0.042) !important;
+                    background-color: rgba(0, 0, 0, 0.107) !important;
+                    border-radius: 50%; /* Crée le cercle */
+                    text-align: center;
+                    line-height: 30px; /* Centrer le texte verticalement */
+                    font-size: .6em;
+                    cursor: pointer;
+                    &:hover .info-tooltip {
+                        visibility: visible;
+                        opacity: 1;
+                    }
+                }
+                .info-tooltip {
+                    visibility: hidden;
+                    position: absolute;
+                    bottom: 35px; /* Positionne l'info sous le cercle */
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background-color: rgba(0, 0, 0, 0.4) !important;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: 1.2em;
+                    white-space: nowrap;
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                }
+            }
+        }
+        ul {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            li {
+                backdrop-filter: blur(5px);
+                border: 1px solid var(--background3);
+                padding: 10px 20px;
+                display: flex;
+                align-items: center;
+                border-radius: 5px;
+                button {
+                    border: 1px solid rgba(255, 255, 255, 0.042) !important;
+                    background-color: rgba(0, 0, 0, 0.107) !important;
+                }
+            }
+        }
+    }
+  }
+  
+  .player-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 0;
+  }
+  
+  .playersBtn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .playersBtn:hover {
+    background: #2980b9;
+  }
+  
+  

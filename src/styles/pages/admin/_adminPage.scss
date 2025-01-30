@@ -5,9 +5,14 @@
     min-height: 100vh;
     &__header {
         display: flex;
-        justify-content: end;
+        justify-content: space-between;
         padding-bottom: 40px;
         box-sizing: border-box;
+        .playersBtn {
+            position: relative;
+            z-index: 20;
+            background-color: rgba(0, 0, 0, 0.107) !important;
+        }
     }
     &__themes {
         display: flex;
@@ -28,15 +33,31 @@
                 li {
                     .themeCard {
                         border-radius: 10px;
+                        background-image:  repeating-radial-gradient( circle at 0 0, transparent 0, #09090973 10px ), repeating-linear-gradient( #00000027, #0000005c ) !important;
                         &__name {
                             display: flex;
                             gap: 10px;
                             color: var(--foreground);
+                            font-size: 1em;
+                            h3 {
+                                text-wrap: wrap;
+                                font-size: 1em;
+                                font-weight: 600;
+                            }
                         }
                         &__buttons {
                             display: flex;
                             justify-content: space-between;
                             margin-top: 10px;
+                            button {
+                                background-color: transparent !important;
+                                backdrop-filter: blur(5px);
+                                border: 1px solid transparent !important;
+                                box-shadow: rgba(0, 0, 0, 0.17) 0px -23px 25px 0px inset, rgba(0, 0, 0, 0.15) 0px -36px 30px 0px inset, rgba(0, 0, 0, 0.1) 0px -79px 40px 0px inset, rgba(0, 0, 0, 0.06) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px;
+                                color: var(--foreground) !important;
+                                font-weight: bold;
+                                font-size: .8em;
+                            }
                         }
                     }
                 }
