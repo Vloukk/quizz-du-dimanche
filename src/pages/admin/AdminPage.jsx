@@ -55,7 +55,7 @@ const AdminPage = () => {
   // Gérer la déconnexion
   const handleLogout = () => {
     localStorage.removeItem('isAdmin'); // Supprime la valeur "isAdmin"
-    navigate('/admin'); // Redirige vers la page de connexion
+    navigate('/'); // Redirige vers la page de connexion
   };
 
   return (

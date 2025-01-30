@@ -21,9 +21,40 @@ html {
 input {
     color: var(--font-color) !important;
     border: var(--background2) 1px solid !important;
-    background-color: var(--background1) !important;
+    background-color: var(--background) !important;
+    border-radius: 5px;
     border: none;
+    &:focus {
+        outline: none; /* Retirer le contour par défaut */
+        color: var(--foreground) !important;
+        border: 2px solid var(--background2) !important;
+    }
 }
+
+    #difficulty {
+        -webkit-appearance: none; /* Pour Chrome/Safari */
+        -moz-appearance: none;    /* Pour Firefox */
+        appearance: none; 
+        color: var(--font-color) !important;
+        border: var(--background2) 1px solid !important;
+        background-color: var(--background) !important;
+        border: none;
+        font-size: 1em;
+        padding:5px 10px;
+        box-sizing: border-box;
+        border-radius: 5px !important;
+        cursor: pointer !important;
+        option {
+            color: var(--font-color) !important;
+            border: var(--background2) 1px solid !important;
+            background-color: var(--background) !important;
+            border: none;
+            &:focus {
+                border-radius: 5px 5px 0 0 !important;
+                background-color: red;
+            }
+        }
+    }
 
 button {
     background-color: var(--background) !important;

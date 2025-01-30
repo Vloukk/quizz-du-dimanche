@@ -30,6 +30,89 @@
         box-sizing: border-box;
         color: var();
     }
+    &__info {
+        position: relative;
+        display: flex;
+        align-items: center;
+        .info {
+            &__text {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                input {
+                    min-height: 40px;
+                }
+                .theme {
+                    min-width: 300px;
+                    padding: 0 10px;
+                    box-sizing: border-box;
+                }
+                .difficulty-selector, .generate {
+                    margin-left: 30px;
+                }
+                .difficulty-selector {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .generate {
+                    text-align: center;
+                    border: 1px solid transparent !important; /* Bordure transparente */
+                    border-radius: 5px;
+                    cursor: pointer;
+                    outline: none;
+                    position: relative;
+                    overflow: hidden;
+                    transition: color 0.3s ease;
+                    position: relative;
+                    z-index: 1;
+                    background-image: conic-gradient(
+                        #fd004c,
+                        #fe9000,
+                        #fff020,
+                        #3edf4b,
+                        #3363ff,
+                        #b102b7,
+                        #fd004c
+                    );
+                    background-size: 400% 400%; /* Augmenter la taille du dégradé */
+                    animation: rainbow-background 4s linear infinite; /* L'animation du dégradé */
+                }
+                
+                @keyframes rainbow-background {
+                    0% {
+                        background-position: 0% 50%;
+                    }
+                    50% {
+                        background-position: 100% 50%;
+                    }
+                    100% {
+                        background-position: 0% 50%;
+                    }
+                }
+                
+                .generate::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    border-radius: 5px;
+                    border: 5px solid transparent;
+                    background-color: var(--background);
+                    background-size: 400% 400%; /* Augmenter la taille du dégradé */
+                    animation: rainbow-border 5s linear infinite; /* L'animation du dégradé */
+                    z-index: -1; /* Placer la bordure derrière le texte */
+                }
+            }
+            &__answers {
+                position: absolute;
+                top: 0;
+                right: 0;
+            }
+        }
+    }
     &__list {
         width: 100%;
         display: flex;

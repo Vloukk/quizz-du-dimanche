@@ -2,6 +2,7 @@
     padding: 40px;
     box-sizing: border-box;
     color: var(--font-color);
+    min-height: 100vh;
     &__header {
         display: flex;
         justify-content: end;

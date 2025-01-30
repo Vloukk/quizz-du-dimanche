@@ -32,6 +32,8 @@
     cursor: pointer;
     text-align: center;
     border-radius: 5px;
+    font-size: .8em;
+    background-image:  repeating-radial-gradient( circle at 0 0, transparent 0, #09090973 10px ), repeating-linear-gradient( #00000027, #0000005c ) !important;
   }
   
   .theme-item:hover {
