@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const PlayerInfo = ({ pseudo, onLogout, theme, onChangeTheme }) => {
+const PlayerInfo = ({ pseudo, onLogout, theme, onChangeTheme, gameStarted }) => {
   
   // Utilisation de useEffect pour écouter les changements de thème
   useEffect(() => {
@@ -10,6 +10,9 @@ const PlayerInfo = ({ pseudo, onLogout, theme, onChangeTheme }) => {
 
   return (
     <div className='playerInfos'>
+      <div className="playerInfos__logo">
+        <img src="/logo-quizz.svg" alt="logo" />
+      </div>
       <div className='infos'>
         <div className="infos__pseudo">
           <span>Pseudo du joueur :</span>
@@ -28,8 +31,13 @@ const PlayerInfo = ({ pseudo, onLogout, theme, onChangeTheme }) => {
           <span>Aucun thème sélectionné.</span>
         )}
       </div>
-      <button onClick={onChangeTheme}>Changer de Thème</button>
-      <button onClick={onLogout}>Déconnexion</button>
+      <button 
+        onClick={onChangeTheme} 
+        disabled={gameStarted}  // Désactive le bouton si le jeu a démarré
+      >
+        Changer de Thème
+      </button>
+      <button className='deco' onClick={onLogout}>Déconnexion</button>
     </div>
   );
 };

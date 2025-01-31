@@ -189,6 +189,8 @@ const ThemeForm = ({ themeToEdit, onCancel, onSave }) => {
         </div>
       </div>
 
+      <span className='separator'></span>
+
       <div className="themeForm__title">
         <span>Questions</span>
         <span>Temps (s)</span>

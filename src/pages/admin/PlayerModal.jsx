@@ -54,6 +54,7 @@ const PlayersModal = ({ isOpen, onClose, modalRef }) => {
             {players.map((player) => (
               <li key={player.id} className="player-item">
                 <span>{player.pseudo || 'Nom inconnu'}</span>
+                <span>{player.sessionId || 'Nom inconnu'}</span>
                 <button onClick={() => handleKickPlayer(player.id)}>Expulser</button>
               </li>
             ))}

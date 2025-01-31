@@ -57,6 +57,9 @@ const Home = () => {
 
   return (
     <section className="home">
+      <div className="home__logo">
+        <img src="/logo-quizz.svg" alt="" />
+      </div>
       <div className="home__form">
         {!localStorage.getItem('pseudo') && (
           <form onSubmit={handleSubmit}>
@@ -82,7 +85,7 @@ const Home = () => {
                 </div>
               )}
             </div>
-            <button type="submit">Let's gooo !</button>
+            <button className='go' type="submit">Let's gooo !</button>
           </form>
         )}
       </div>

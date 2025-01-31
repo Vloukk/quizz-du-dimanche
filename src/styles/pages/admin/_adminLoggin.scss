@@ -15,6 +15,12 @@
         }
         button {
             border-radius: 5px;
+            color: var(--background) !important;
+            border: none !important;
+            background-color: var(--1) !important;
+            &:hover {
+                background-color: var(--2) !important;
+            }
         }
     }
     p {

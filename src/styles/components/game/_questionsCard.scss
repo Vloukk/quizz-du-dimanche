@@ -1,0 +1,27 @@
+.questionCard {
+    width: 100%;
+    height: 100px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-image:  repeating-radial-gradient( circle at 0 0, transparent 0, #09090973 10px ), repeating-linear-gradient( #00000027, #0000005c ) !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    position: relative;
+    transform-style: preserve-3d;
+    &__content {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        font-size: 1.2rem;
+    }
+}

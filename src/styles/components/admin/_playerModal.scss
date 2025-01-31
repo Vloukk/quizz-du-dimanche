@@ -8,7 +8,7 @@
     height: 100%;
     display: flex;
     &__content {
-        background-color: var(--background4);
+        background-color: var(--background);
         box-shadow: rgba(0, 0, 0, 0.137) 0px 22px 20px 4px;
         padding: 20px;
         position: relative;
@@ -29,10 +29,9 @@
                     width: 20px;
                     height: 20px;
                     border: 1px solid rgba(255, 255, 255, 0.042) !important;
-                    background-color: rgba(0, 0, 0, 0.107) !important;
+                    background-color: var(--background5);
                     border-radius: 50%; /* Crée le cercle */
                     text-align: center;
-                    line-height: 30px; /* Centrer le texte verticalement */
                     font-size: .6em;
                     cursor: pointer;
                     &:hover .info-tooltip {
@@ -51,6 +50,7 @@
                     border-radius: 4px;
                     font-size: 1.2em;
                     white-space: nowrap;
+                    line-height: 30px; /* Centrer le texte verticalement */
                     opacity: 0;
                     transition: opacity 0.3s;
                 }
@@ -62,38 +62,32 @@
             flex-direction: column;
             gap: 5px;
             li {
-                backdrop-filter: blur(5px);
                 border: 1px solid var(--background3);
+                background-color: var(--background5);
                 padding: 10px 20px;
                 display: flex;
                 align-items: center;
                 border-radius: 5px;
+                display: flex;
+                justify-content: space-between;
+                gap: 40px;
+                margin: 5px 0;
+                overflow: hidden;
+                span {
+                    font-weight: initial;
+                    font-size: .8em;
+                    &:first-child {
+                        min-width: 50px;
+                        font-weight: bold;
+                    }
+                }
                 button {
                     border: 1px solid rgba(255, 255, 255, 0.042) !important;
-                    background-color: rgba(0, 0, 0, 0.107) !important;
+                    background-color: var(--background5);
                 }
             }
         }
     }
-  }
-  
-  .player-item {
-    display: flex;
-    justify-content: space-between;
-    margin: 5px 0;
-  }
-  
-  .playersBtn {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .playersBtn:hover {
-    background: #2980b9;
   }
   
   

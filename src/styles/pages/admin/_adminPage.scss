@@ -11,19 +11,19 @@
         .playersBtn {
             position: relative;
             z-index: 20;
-            background-color: rgba(0, 0, 0, 0.107) !important;
+            background-color: var(--background5) !important;
         }
     }
     &__themes {
         display: flex;
-        gap: 50px;
+        gap: 30px;
         .themes {
             &__list {
-                background-color: var(--background1);
-                border: var(--background2) 1px solid;
+                background-color: var(--background5);
+                border: var(--background3) 1px solid;
                 display: flex;
                 flex-direction: column;
-                width: 25vw;
+                width: 30vw;
                 padding: 20px 10px;
                 box-sizing: border-box;
                 border-radius: 10px;

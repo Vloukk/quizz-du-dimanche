@@ -1,12 +1,16 @@
 
 #root {
     --background: #0A0A0A;
-    --foreground: #e4e4e4;
     --background2 : #2B2B2B;
     --background3 : #131313;
-    --background4 : #040404;
+    --background4 : #0D0D0D;
+    --background5: rgba(0, 0, 0, 0.2);
 
-    --font-color : #393939;
+    --1: #6538CD;
+    --2: #c548ffd3;
+
+    --font-color : #444444;
+    --foreground: #e4e4e4;
 
     
     color: var(--font-color);
@@ -21,14 +25,14 @@ html {
 
 input {
     color: var(--font-color) !important;
-    border: var(--background2) 1px solid !important;
-    background-color: var(--background) !important;
+    background-color: rgba(0, 0, 0, 0.336) !important;
+    border: 1px solid rgba(255, 255, 255, 0.103) !important;
     border-radius: 5px;
     border: none;
     &:focus {
         outline: none; /* Retirer le contour par défaut */
         color: var(--foreground) !important;
-        border: 2px solid var(--background2) !important;
+        border: 2px solid var(--background3) !important;
     }
 }
 
@@ -37,8 +41,8 @@ input {
         -moz-appearance: none;    /* Pour Firefox */
         appearance: none; 
         color: var(--font-color) !important;
-        border: var(--background2) 1px solid !important;
-        background-color: var(--background) !important;
+        background-color: rgba(0, 0, 0, 0.336) !important;
+        border: 1px solid rgba(255, 255, 255, 0.103) !important;
         border: none;
         font-size: 1em;
         padding:5px 10px;
@@ -58,8 +62,8 @@ input {
     }
 
 button {
-    background-color: var(--background) !important;
-    border: 1px solid var(--background2) !important;
+    background-color: rgba(0, 0, 0, 0.336) !important;
+    border: 1px solid var(--background3) !important;
     color: var(--font-color) !important;
     padding:10px 20px;
     transition: all ease-in-out .2s;
@@ -67,7 +71,7 @@ button {
     border-radius: 5px !important;
     cursor: pointer;
     &:hover {
-        border: 1px solid var(--background3) !important;
+        border: 1px solid var(--background) !important;
     }
 }
 
