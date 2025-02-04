@@ -5,11 +5,13 @@
     --background3 : #131313;
     --background4 : #0D0D0D;
     --background5: rgba(0, 0, 0, 0.2);
+    --background6: rgba(48, 48, 48, 0.2);
 
-    --1: #6538CD;
+    --1: #8C57FF;
     --2: #c548ffd3;
 
     --font-color : #444444;
+    --font-color2 : #ececec;
     --foreground: #e4e4e4;
 
     
@@ -23,7 +25,7 @@ html {
     font-family: 'nunito sans';
 } 
 
-input {
+input, textarea {
     color: var(--font-color) !important;
     background-color: rgba(0, 0, 0, 0.336) !important;
     border: 1px solid rgba(255, 255, 255, 0.103) !important;
@@ -32,7 +34,7 @@ input {
     &:focus {
         outline: none; /* Retirer le contour par défaut */
         color: var(--foreground) !important;
-        border: 2px solid var(--background3) !important;
+        border: 1px solid var(--background3) !important;
     }
 }
 

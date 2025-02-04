@@ -25,3 +25,8 @@
         font-size: 1.2rem;
     }
 }
+
+.questionCard.disabled {
+    pointer-events: none; /* Empêche toute interaction avec la carte */
+    opacity: 0.5; /* Diminue l'opacité pour la rendre visuellement inactive */
+}

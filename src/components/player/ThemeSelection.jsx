@@ -7,19 +7,22 @@ const ThemeSelection = ({ isOpen, onClose, themes, usedThemeIds, onThemeUpdate }
 
   useEffect(() => {
     if (isOpen) {
-      // Animer chaque carte de thème lorsque la modal s'ouvre
-      gsap.from('.theme-item', {
-        y: 120,         // Position de départ
-        opacity: 1,     // Rendre invisible au départ
-        stagger: 0.1,   // Ajouter un petit délai entre chaque animation
-        duration: 0.6,  // Durée de l'animation
-        ease: 'power2.inOut', // Facilité d'animation
-      });
+      // Assurez-vous que les éléments .theme-item sont présents avant de commencer l'animation
+      const themeItems = document.querySelectorAll('.theme-item');
+      if (themeItems.length) {
+        gsap.from(themeItems, {
+          y: 120,         // Position de départ
+          opacity: 0,     // Rendre invisible au départ
+          stagger: 0.1,   // Ajouter un petit délai entre chaque animation
+          duration: 0.6,  // Durée de l'animation
+          ease: 'power2.inOut', // Facilité d'animation
+        });
+      }
     }
   }, [isOpen]);
 
   // Filtrer les thèmes pour ne pas afficher ceux déjà utilisés
-  const availableThemes = themes.filter(theme => !usedThemeIds.includes(theme.id));
+  const availableThemes = themes?.filter(theme => !usedThemeIds?.includes(theme.id)) || [];
 
   const handleThemeSelect = async (theme) => {
     try {
@@ -28,23 +31,23 @@ const ThemeSelection = ({ isOpen, onClose, themes, usedThemeIds, onThemeUpdate }
         console.log('Player ID not found');
         return;
       }
-  
+
       const playerQuery = query(
         collection(db, 'players'),
         where('playerId', '==', playerId)
       );
-  
+
       const querySnapshot = await getDocs(playerQuery);
-  
+
       if (!querySnapshot.empty) {
         const playerDoc = querySnapshot.docs[0]; 
         const playerDocRef = playerDoc.ref;
-  
+
         await updateDoc(playerDocRef, {
           themeId: theme.id,
           themeColor: theme.color,
         });
-  
+
         console.log('Thème sélectionné et mis à jour dans Firestore');
         localStorage.setItem('themeSelected', 'true'); // Marquer le thème comme sélectionné
         onThemeUpdate(theme);
@@ -54,7 +57,7 @@ const ThemeSelection = ({ isOpen, onClose, themes, usedThemeIds, onThemeUpdate }
     } catch (error) {
       console.error('Erreur lors de la mise à jour du thème:', error);
     }
-  
+
     onClose();
   };
   
@@ -65,16 +68,20 @@ const ThemeSelection = ({ isOpen, onClose, themes, usedThemeIds, onThemeUpdate }
       <h2>Sélectionner un Thème</h2>
       <div className="modal-content">
         <div className="themes">
-          {availableThemes.map((theme) => (
-            <div
-              key={theme.id}
-              className="theme-item"
-              style={{ backgroundColor: theme.color }}
-              onClick={() => handleThemeSelect(theme)} // Sélection du thème
-            >
-              <span>{theme.name}</span>
-            </div>
-          ))}
+          {availableThemes.length === 0 ? (
+            <p>Aucun thème disponible.</p>
+          ) : (
+            availableThemes.map((theme) => (
+              <div
+                key={theme.id}
+                className="theme-item"
+                style={{ backgroundColor: theme.color }}
+                onClick={() => handleThemeSelect(theme)} // Sélection du thème
+              >
+                <span>{theme.name}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -82,4 +89,3 @@ const ThemeSelection = ({ isOpen, onClose, themes, usedThemeIds, onThemeUpdate }
 };
 
 export default ThemeSelection;
-
