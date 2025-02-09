@@ -46,12 +46,43 @@ const ThemeForm = ({ themeToEdit, onCancel, onSave }) => {
               role: "user", content: `
               Génère 10 questions de quiz en rapport avec le thème "${newThemeName}". 
               Le niveau de difficulté est ${difficulty}. 
-              Chaque question doit avoir une seule bonne réponse. 
-              La réponse doit être correcte, basée sur des faits vérifiables, sans générer de réponses approximatives ou fausses.
-              Formate les résultats sous forme de question suivie de sa réponse. Par exemple :
-              1. Question : Quel est le nom de la déesse protectrice des Eniripsas dans Dofus ?
-                 Réponse : Eniripsa
-              ` 
+              Chaque question doit avoir une ou plusieurs bonnes réponses. Les réponses possibles doivent être basées uniquement sur des variations d'orthographe, des formulations courantes, des abréviations, ou des titres simplifiés. Si une seule réponse correcte existe, n'ajoute pas de réponses supplémentaires. Ne rajoute pas de variantes inutiles, ne dupplique pas les réponses, et surtout pour des titres de films ou des termes précis.
+            
+              Par exemple :
+              1. Question : Quel est le président des États-Unis en 2025 ?
+                 Réponses possibles : Joe Biden, Biden, Joseph R. Biden
+              
+              2. Question : Quel est l'élément chimique dont le symbole est "O" ?
+                 Réponses possibles : Oxygène, Dioxygène, O2
+              
+              3. Question : Quelle est la capitale de la France ?
+                 Réponses possibles : Paris
+              
+              4. Question : Quelle est la couleur du ciel lors d'une journée ensoleillée ?
+                 Réponses possibles : Bleu
+              
+              5. Question : Qui a peint la Mona Lisa ?
+                 Réponses possibles : Léonard de Vinci, Vinci
+              
+              6. Question : Quel est le titre du film de science-fiction sorti en 1977, réalisé par George Lucas, avec les personnages de Luke Skywalker et Dark Vador ?
+                 Réponses possibles : Star Wars, Guerre des étoiles
+              
+              7. Question : Quel est le titre du film de 1980 avec les personnages de Han Solo, Leia, et Luke Skywalker dans l'univers de Star Wars ?
+                 Réponses possibles : L'Empire contre-attaque, Star Wars épisode V, star wars
+              
+              8. Question : Qui a réalisé le film Titanic sorti en 1997 ?
+                 Réponses possibles : James Cameron
+              
+              9. Question : Quel film a remporté l'Oscar du meilleur film en 1994 ?
+                 Réponses possibles : Forrest Gump
+              
+              10. Question : Quel est le nom du personnage principal du film "Le Seigneur des Anneaux" ?
+                  Réponses possibles : Frodon, Frodon Sacquet
+              
+              Les réponses doivent être exactes et basées sur des faits vérifiables. Ne génère pas de réponses incorrectes ou de variantes qui ne sont pas courantes. Limite les réponses alternatives à des variations d'orthographe ou des simplifications des titres (ex. "Star Wars" au lieu de "Star Wars épisode IV : Un nouvel espoir", ou "Le Retour du Jedi" au lieu de "Star Wars épisode VI : Le Retour du Jedi").
+            
+              Formate les résultats sous forme de question suivie des réponses possibles.
+            `
             }
           ],
           temperature: 0.5, // Réduire la température pour moins de diversité et plus de précision
@@ -84,50 +115,57 @@ const ThemeForm = ({ themeToEdit, onCancel, onSave }) => {
       alert(`Erreur lors de la génération : ${error.message}`);
     }
   };
+
+  ////
+
+  const handleAnswerChange = (questionIndex, answerIndex, newAnswer) => {
+    const updatedQuestions = [...newThemeQuestions];
+    updatedQuestions[questionIndex].correctAnswers[answerIndex] = newAnswer;
+    setNewThemeQuestions(updatedQuestions);
+  };
   
   // Fonction pour parser la réponse de GPT et extraire les questions/réponses
   const parseGPTResponse = (text) => {
     const lines = text.split("\n").filter(line => line.includes(":"));
-    console.log("Lignes extraites de la réponse :", lines);  // Affiche les lignes extraites dans la console
-  
     const questions = [];
-    
-    // On parcourt les lignes par paires : question puis réponse
+  
     for (let i = 0; i < lines.length; i += 2) {
-      const questionLine = lines[i]?.trim();  // La ligne avec la question
-      const answerLine = lines[i + 1]?.trim();  // La ligne avec la réponse
+      const questionLine = lines[i]?.trim();
+      const answerLine = lines[i + 1]?.trim();
       
-      // Si nous avons une question et une réponse, on les ajoute au tableau
       if (questionLine && answerLine) {
-        const questionText = questionLine.replace(/^(\d+\.)\s?Question\s?:\s?/i, '').trim(); // Nettoie le texte de la question
-        const answerText = answerLine.replace(/^Réponse\s?:\s?/i, '').trim(); // Nettoie la réponse
-        
+        const questionText = questionLine.replace(/^(\d+\.)\s?Question\s?:\s?/i, '').trim();
+        const answerText = answerLine.replace(/^Réponses possibles\s?:\s?/i, '').trim();
+  
+        // Séparer les réponses alternatives
+        const answers = answerText.split(',').map(ans => ans.trim());
+  
         questions.push({
           question: questionText,
           timeLimit: 30,
-          correctAnswer: answerText,
+          correctAnswers: answers, // Stocker toutes les réponses possibles
         });
       }
     }
   
-    console.log("Questions extraites : ", questions);  // Affiche les questions extraites dans la console
     return questions;
   };
+  
 
   const handleSaveTheme = async (event) => {
     event.preventDefault();
-
+  
     if (!newThemeName.trim() || !newThemeColor.trim() || newThemeQuestions.length === 0) {
       alert('Veuillez remplir tous les champs et générer les questions.');
       return;
     }
-
+  
     const newTheme = {
       name: newThemeName,
       color: newThemeColor,
       questions: newThemeQuestions,
     };
-
+  
     try {
       if (themeToEdit) {
         const themeRef = doc(db, 'themes', themeToEdit.id);
@@ -140,7 +178,7 @@ const ThemeForm = ({ themeToEdit, onCancel, onSave }) => {
     } catch (error) {
       console.error('Erreur lors de l’ajout ou modification du thème :', error);
     }
-  };
+  };  
 
   // Fonction pour basculer l'affichage des réponses
   const toggleAllAnswers = () => {
@@ -198,40 +236,46 @@ const ThemeForm = ({ themeToEdit, onCancel, onSave }) => {
       </div>
 
       {newThemeQuestions.map((q, index) => (
-        <div key={index} className='themeForm__list'>
-          {/* Question générée, non modifiable */}
-          <input
-            type="text"
-            placeholder={`Question ${index + 1}`}
-            value={q.question}
-            readOnly // Rend la question non modifiable
-            required
-          />
-          <input
-            type="number"
-            value={q.timeLimit}
-            onChange={(e) => handleQuestionChange(index, 'timeLimit', e.target.value)}
-            required
-          />
-          {/* Réponse correcte modifiable, affichée selon `showAnswers` */}
-          {showAnswers ? (
+  <div key={index} className='themeForm__list'>
+    <input
+      type="text"
+      placeholder={`Question ${index + 1}`}
+      value={q.question}
+      readOnly
+      required
+    />
+    <input
+      type="number"
+      value={q.timeLimit}
+      onChange={(e) => handleQuestionChange(index, 'timeLimit', e.target.value)}
+      required
+    />
+    {showAnswers ? (
+      <ul className='answer__list'>
+        {q.correctAnswers.map((answer, answerIndex) => (
+          <li>
             <input
+              key={answerIndex}
               type="text"
-              placeholder="Réponse correcte"
-              value={q.correctAnswer}
-              onChange={(e) => handleQuestionChange(index, 'correctAnswer', e.target.value)}
+              placeholder={`Réponse alternative ${answerIndex + 1}`}
+              value={answer}
+              onChange={(e) => handleAnswerChange(index, answerIndex, e.target.value)}
               required
             />
-          ) : (
-            <input
-              type="text"
-              placeholder="Réponse correcte"
-              value=""
-              readOnly
-            />
-          )}
-        </div>
-      ))}
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <input
+        type="text"
+        placeholder="Réponse correcte"
+        value="Réponse cachée"
+        readOnly
+      />
+    )}
+  </div>
+))}
+
 
       <div className="themeForm__btn">
         <button type="submit" disabled={!(newThemeName && newThemeColor && newThemeQuestions.length > 0)}>

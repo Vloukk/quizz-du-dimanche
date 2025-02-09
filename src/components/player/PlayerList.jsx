@@ -52,7 +52,8 @@ const PlayerList = ({ sessionId, onStartGame, gameStarted }) => {
               />
               <span><p>{player.pseudo || 'Nom inconnu'}</p></span>
               {gameStarted ? (
-                <span>{player.score || 0}</span> 
+                // Utilisation du champ "points" pour afficher le score
+                <span>{player.points !== undefined && player.points !== null ? player.points : 0}</span>
               ) : (
                 player.playerId === playerId && (
                   <button

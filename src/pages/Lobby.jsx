@@ -28,7 +28,10 @@ const Lobby = () => {
   const [loading, setLoading] = useState(true);
   const [isChangingTurn, setIsChangingTurn] = useState(false);
   const [hasCardFlipped, setHasCardFlipped] = useState(false);
-
+  const [currentPlayerThemeId, setCurrentPlayerThemeId] = useState(null);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(30);  // Initialisation avec 30 secondes
+  const [flippedCards, setFlippedCards] = useState({});
 
   const checkIfPlayerExists = async () => {
     if (!playerId) {
@@ -47,23 +50,20 @@ const Lobby = () => {
   };
 
   const fetchPlayerTheme = async () => {
-    if (!playerId) {
-      console.log("Player ID non défini");
-      return;
-    }
-  
+    if (!playerId) return;
+
     try {
       const playerQuery = query(collection(db, 'players'), where('playerId', '==', playerId));
       const querySnapshot = await getDocs(playerQuery);
-  
+
       if (!querySnapshot.empty) {
         const playerDoc = querySnapshot.docs[0];
         const themeId = playerDoc.data().themeId;
-  
+
         if (themeId) {
           const themeQuery = query(collection(db, 'themes'), where('id', '==', themeId));
           const themeSnapshot = await getDocs(themeQuery);
-  
+
           if (!themeSnapshot.empty) {
             const themeDoc = themeSnapshot.docs[0];
             const theme = {
@@ -84,30 +84,26 @@ const Lobby = () => {
       console.error('Erreur lors de la récupération du thème :', error);
     }
   };
-  
 
   const updatePlayerTheme = async (theme) => {
     try {
-      if (playerTheme) {
+      if (playerTheme && playerTheme.id !== theme.id) {
         setUsedThemeIds((prev) => prev.filter((id) => id !== playerTheme.id));
       }
-  
+
       if (playerId) {
         const playerQuery = query(collection(db, 'players'), where('playerId', '==', playerId));
         const querySnapshot = await getDocs(playerQuery);
-  
+
         if (!querySnapshot.empty) {
           const playerDoc = querySnapshot.docs[0];
           const docRef = doc(db, 'players', playerDoc.id);
-  
-          console.log("Mise à jour du thème pour le joueur :", playerId, theme);
-          await updateDoc(docRef, { themeId: theme.id }); // On met à jour l'ID du thème dans la base
+          await updateDoc(docRef, { themeId: theme.id });
         }
       }
-  
-      setPlayerTheme({ id: theme.id, name: theme.name, color: theme.color });
-      localStorage.setItem('playerTheme', JSON.stringify(theme)); // Enregistrement dans localStorage
-  
+
+      setPlayerTheme(theme);
+      localStorage.setItem('playerTheme', JSON.stringify(theme));  // Enregistrement dans localStorage
       setUsedThemeIds((prev) => [...prev, theme.id]);
       setIsThemeModalOpen(false);
     } catch (error) {
@@ -118,24 +114,22 @@ const Lobby = () => {
   useEffect(() => {
     const savedTheme = localStorage.getItem('playerTheme');
     if (savedTheme) {
-      const parsedTheme = JSON.parse(savedTheme);
-      setPlayerTheme(parsedTheme); // Réinitialise le thème depuis le localStorage
+      setPlayerTheme(JSON.parse(savedTheme));
     }
-  }, []); // Ce useEffect ne s'exécute qu'une fois lors du chargement initial
+  }, []);
 
-  //////////////////////////////////////////////////////////////////////////////////////////
-
+  // Start Game
   const startGame = async () => {
     if (players.length < 2 || players.some((player) => !player.isReady)) {
       console.log("Il faut au moins 2 joueurs prêts pour démarrer.");
       return;
     }
-  
+
     const gameRef = doc(db, 'games', sessionId);
     const gameSnapshot = await getDoc(gameRef);
-  
+
     if (gameSnapshot.exists() && gameSnapshot.data().gameStarted) return;
-  
+
     const playersData = players.map((player) => ({
       id: player.id,
       playerId: player.playerId,
@@ -143,77 +137,117 @@ const Lobby = () => {
       isReady: player.isReady || false,
       themeId: player.themeId || '',
     }));
-  
-    // Assurez-vous que flippedCards est initialisé à un objet vide
+
     await setDoc(gameRef, {
       gameStarted: true,
-      currentTurnPlayerId: playersData[0].playerId,
+      currentTurnPlayerId: playersData[0].playerId,  // Le premier joueur qui commence
       players: playersData,
-      flippedCards: {}  // Initialisation du champ flippedCards en tant qu'objet vide
+      flippedCards: {},  // Initialisation du champ flippedCards en tant qu'objet vide
+      timer: 30,  // Temps du timer en secondes
+      isTimerRunning: true,  // Le timer commence immédiatement
     }, { merge: true });
-  
+
     setGameStarted(true);
     localStorage.setItem(`gameStarted_${sessionId}`, 'true');
-  };  
+  };
 
-  //////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////
+
+  useEffect(() => {
+    const gameRef = doc(db, "games", sessionId);
+    const unsubscribe = onSnapshot(gameRef, (docSnapshot) => {
+      const gameData = docSnapshot.data();
+      if (gameData) {
+        setGameStarted(gameData.gameStarted || false);
+        setCurrentTurnPlayerId(gameData.currentTurnPlayerId);
+        setIsTimerRunning(gameData.isTimerRunning ?? false);
+        setRemainingTime(gameData.timer);
+        setFlippedCards(gameData.flippedCards || {});
+        localStorage.setItem(`gameStarted_${sessionId}`, gameData.gameStarted ? 'true' : 'false');  // Sauvegarde pour reload
+      }
+    });
+  
+    return () => unsubscribe();
+  }, [sessionId]);
+  
+
+  /////////////////////////////////////////////////////////////////////////////////////////// Change Turn
 
   const onNextTurn = async () => {
     if (isChangingTurn) return;
-
+  
     setIsChangingTurn(true);
-    console.log("🔄 Passage au tour suivant !");
-
+  
     try {
-        const gameRef = doc(db, 'games', sessionId);
-        const gameSnapshot = await getDoc(gameRef);
-
-        if (!gameSnapshot.exists()) {
-            console.error('❌ Le jeu n\'existe pas ou n\'a pas été trouvé.');
-            return;
-        }
-
-        const gameData = gameSnapshot.data();
-
-        // Vérifier que la partie a bien démarré
-        if (!gameData.gameStarted) {
-            console.warn("⚠️ La partie n'est pas encore commencée !");
-            return;
-        }
-
-        const currentPlayerIndex = gameData.players.findIndex(
-            (player) => player.playerId === gameData.currentTurnPlayerId
-        );
-        const nextPlayerIndex = (currentPlayerIndex + 1) % gameData.players.length;
-        const nextPlayerId = gameData.players[nextPlayerIndex]?.playerId;
-
-        // Vérification de la validité du joueur suivant
-        if (!nextPlayerId) {
-            console.error('❌ Le joueur suivant n\'a pas été trouvé.');
-            return;
-        }
-
-        console.log(`🔄 Nouveau joueur actif : ${nextPlayerId}`);
-
-        await updateDoc(gameRef, {
-            currentTurnPlayerId: nextPlayerId,
-        });
-
-        // 🔹 NE PAS mettre à jour `setCurrentTurnPlayerId(nextPlayerId)`, Firestore gère ça !
-        
-        // 🛑 Fermer la modal et réinitialiser la question après le tour
-        setSelectedQuestion(null);
-        setIsAnswerModalOpen(false);
-        setHasCardFlipped(false);
-
+      const gameRef = doc(db, 'games', sessionId);
+      const gameSnapshot = await getDoc(gameRef);
+  
+      if (!gameSnapshot.exists()) {
+        console.error('❌ Game not found.');
+        return;
+      }
+  
+      const gameData = gameSnapshot.data();
+      const currentPlayerIndex = gameData.players.findIndex(
+        (player) => player.playerId === gameData.currentTurnPlayerId
+      );
+  
+      const nextPlayerIndex = (currentPlayerIndex + 1) % gameData.players.length;
+      const nextPlayerId = gameData.players[nextPlayerIndex]?.playerId;
+  
+      if (!nextPlayerId) {
+        console.error('❌ Next player not found.');
+        return;
+      }
+  
+      // Mise à jour du timer et autres infos dans Firestore
+      console.log("📝 Mise à jour des données dans Firestore...");
+      await updateDoc(gameRef, {
+        currentTurnPlayerId: nextPlayerId,
+        timer: 30,  // Réinitialisation du timer
+        isTimerRunning: false,  // Le timer doit être arrêté ici
+      });
+  
+      // Mise à jour des états locaux après la mise à jour Firestore
+      setRemainingTime(30);  // Mettre à jour l'état local du timer
+      setIsTimerRunning(true);  // Démarrer le timer localement
+      setCurrentTurnPlayerId(nextPlayerId);
+  
     } catch (error) {
-        console.error('❌ Erreur lors du changement de tour :', error);
+      console.error('❌ Error while changing turn:', error);
     } finally {
-        setIsChangingTurn(false);
+      setIsChangingTurn(false);
+      console.log("🔄 Changement de tour terminé.");
     }
   };
+  
+  /////////////////////////////////////////////////////////////////////////////////////////
+  
+  // Écouter les changements dans Firestore
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, "games", sessionId), (docSnapshot) => {
+      const gameData = docSnapshot.data();
+      if (gameData) {
+        // Vérifier si l'état du timer a changé
+        if (gameData.isTimerRunning !== isTimerRunning) {
+          setIsTimerRunning(gameData.isTimerRunning ?? false);
+        }
+  
+        // Mettre à jour le timer si nécessaire
+        if (gameData.timer !== remainingTime) {
+          setRemainingTime(gameData.timer);
+        }
+  
+        // Mettre à jour le joueur actuel
+        setCurrentTurnPlayerId(gameData.currentTurnPlayerId);
+      }
+    });
+  
+    return () => unsubscribe();  // Nettoyer l'abonnement lorsque le composant se démonte
+  }, [sessionId, isTimerRunning, remainingTime]);  // Dépendances
 
 
+  /////////////////////////////////////////////////////////////////////////////////////////
 
   const handleLogout = async () => {
     try {
@@ -227,11 +261,7 @@ const Lobby = () => {
         }
       }
 
-      localStorage.removeItem('sessionId');
-      localStorage.removeItem('pseudo');
-      localStorage.removeItem('playerId');
-      localStorage.removeItem('playerTheme');
-
+      localStorage.clear();
       setUsedThemeIds((prev) => prev.filter((themeId) => themeId !== playerTheme?.id));
       navigate('/');
     } catch (error) {
@@ -239,15 +269,16 @@ const Lobby = () => {
     }
   };
 
+  ///////////////////////////////////////////////////////////////////////////////////
+
   const availableThemes = themes.filter((theme) => !usedThemeIds.includes(theme.id) || playerTheme?.id === theme.id);
 
   useEffect(() => {
     checkIfPlayerExists();
-  }, [playerId, sessionId, navigate]);
-
-  useEffect(() => {
     fetchPlayerTheme();
-  }, [playerId]);
+  }, [playerId, sessionId]);
+
+  ///////////////////////////////////////////////////////////////////////////////////
 
   useEffect(() => {
     const playersQuery = query(collection(db, 'players'), where('sessionId', '==', sessionId));
@@ -263,6 +294,8 @@ const Lobby = () => {
     return () => unsubscribe();
   }, [sessionId]);
 
+  ///////////////////////////////////////////////////////////////////////////////////
+
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'themes'), (querySnapshot) => {
       const themesList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -272,31 +305,44 @@ const Lobby = () => {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const gameRef = doc(db, 'games', sessionId);
-    const unsubscribe = onSnapshot(gameRef, (docSnapshot) => {
-      const gameData = docSnapshot.data();
-      if (gameData) {
-        setGameStarted(gameData.gameStarted);
-        setCurrentTurnPlayerId(gameData.currentTurnPlayerId);
-      }
-    });
+  ///////////////////////////////////////////////////////////////////////////////////
 
-    return () => unsubscribe();
-  }, [sessionId]);
-
-  ///
-
-  const handleQuestionSelect = (question) => {
-    console.log("Question sélectionnée dans Lobby.jsx :", question);
+  const handleQuestionSelect = async (question) => {
+    // On met d'abord à jour l'état avec la question sélectionnée
     setSelectedQuestion(question);
-    setIsAnswerModalOpen(true);
+    
+    // On effectue les autres mises à jour nécessaires
+    setHasCardFlipped(true);
+    setIsTimerRunning(true);
+    
+    // On met à jour la base de données
+    const gameRef = doc(db, 'games', sessionId);
+    await updateDoc(gameRef, { selectedQuestion: question });
   };
   
-  //
+  // Utilisation de useEffect pour ouvrir le modal après la mise à jour de selectedQuestion
+  useEffect(() => {
+    if (selectedQuestion) {
+      setIsAnswerModalOpen(true);  // Ouvre le modal seulement après que selectedQuestion soit défini
+    }
+  }, [selectedQuestion]);  // Ce useEffect se déclenche chaque fois que selectedQuestion change
+  
+  ///
+
   const currentPlayer = players.find(player => player.playerId === currentTurnPlayerId);
   const currentPlayerThemeColor = currentPlayer ? currentPlayer.themeColor : "#ffffff";
 
+  //
+
+  const handleTimerStateChange = (newState) => {
+    setIsTimerRunning(newState); // Mettez à jour l'état du timer
+  };
+
+  useEffect(() => {
+    if (selectedQuestion && !isAnswerModalOpen) {
+      setIsAnswerModalOpen(true);
+    }
+  }, [selectedQuestion, isAnswerModalOpen]);  
 
   return (
     <div className="lobby">
@@ -327,6 +373,7 @@ const Lobby = () => {
           playerId={playerId}
           onNextTurn={onNextTurn}
           onQuestionSelect={handleQuestionSelect}
+          isTimerRunning={isTimerRunning}
         />
       )}
       <ModalAnswer
@@ -336,6 +383,11 @@ const Lobby = () => {
         playerId={playerId}
         currentTurnPlayerId={currentTurnPlayerId}
         currentPlayerThemeColor={currentPlayerThemeColor}
+        currentPlayerThemeId={currentPlayerThemeId}
+        isTimerRunning={isTimerRunning}
+        hasCardFlipped={hasCardFlipped}
+        onTimerStateChange={handleTimerStateChange}
+        sessionId={sessionId}
       />
     </div>
   );
